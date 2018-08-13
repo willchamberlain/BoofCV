@@ -41,6 +41,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Detects square binary fiducials inside an image, writes out there pose, and visualizes a virtual flat cube
@@ -59,10 +61,51 @@ public class MeasurementModelFiducialBinary {
 		LensDistortionNarrowFOV lensDistortion = new LensDistortionRadialTangential(param);
 
 		List<BufferedImage> inputs = UtilImageIO.loadImages(directory  , ".*\\.png" ) ;
-		// BufferedImage input = UtilImageIO.loadImage(directory , "image0000.jpg");
-//		BufferedImage input = UtilImageIO.loadImage(directory , "image0001.jpg");
-//		BufferedImage input = UtilImageIO.loadImage(directory , "image0002.jpg");
-		for(BufferedImage input : inputs ) {
+
+		File[] imageFiles = UtilImageIO.findImageFiles(directory, ".*\\.png")  ;
+
+
+		if( null == imageFiles ) {
+			System.out.println("!! NO IMAGE FILES FOUND !!");
+		} else {
+			System.out.println("Found "+imageFiles.length+" files");
+		}
+
+		String filename_pose_regex = "x(.*)_y(.*)_z(.*)_s(.*)_v(.*)_(.*)_(.*)\\.png" ;	
+		Pattern filename_pose_pattern = Pattern.compile(filename_pose_regex);
+
+		System.out.println("\nListing files\n");
+		for( File f : imageFiles ) {
+			System.out.println("File at " + f.getAbsolutePath());
+
+			Matcher filename_pose_matcher = filename_pose_pattern.matcher(f.getAbsolutePath()) ;
+			System.out.println("filename_pose_matcher.matches()="+filename_pose_matcher.matches());
+			System.out.println("filename_pose_matcher.groupCount()="+filename_pose_matcher.groupCount());
+			if( 7 == filename_pose_matcher.groupCount() ) {
+				filename_pose_matcher.find();
+				System.out.println("Right group count");
+				String x 	= filename_pose_matcher.group(1);
+				System.out.println("Right group count");
+				String y 	= filename_pose_matcher.group(2);
+				System.out.println("Right group count");
+				String z 	= filename_pose_matcher.group(3);
+				System.out.println("Right group count");
+				String qS 	= filename_pose_matcher.group(4);
+				System.out.println("Right group count");
+				String qv1 	= filename_pose_matcher.group(5);
+				System.out.println("Right group count");
+				String qv2 	= filename_pose_matcher.group(6);
+				System.out.println("Right group count");
+				String qv3 	= filename_pose_matcher.group(7);
+				System.out.println("pose = ["+x+","+y+","+z+"] : <"+qS+" [ "+qv1+","+qv2+","+qv3+" ]> ");
+			} else {
+				System.out.println("!! Wrong group count !!");
+			}
+
+			BufferedImage input = UtilImageIO.loadImage(f.getAbsolutePath());
+			if( null == input ) {
+				System.out.println("!! COULD NOT LOAD IMAGE FILES at " + f.getAbsolutePath() + " !!");
+			}
 			GrayF32 original = ConvertBufferedImage.convertFrom(input,true, ImageType.single(GrayF32.class));
 
 			// Detect the fiducial
@@ -73,29 +116,29 @@ public class MeasurementModelFiducialBinary {
 			detector.setLensDistortion(lensDistortion);
 			detector.detect(original);
 
-			// // print the results
-			// Graphics2D g2 = input.createGraphics();
-			// Se3_F64 targetToSensor = new Se3_F64();
-			// Point2D_F64 locationPixel = new Point2D_F64();
-			// for (int i = 0; i < detector.totalFound(); i++) {
-			// 	detector.getImageLocation(i, locationPixel);
+			// print the results
+			Graphics2D g2 = input.createGraphics();
+			Se3_F64 targetToSensor = new Se3_F64();
+			Point2D_F64 locationPixel = new Point2D_F64();
+			for (int i = 0; i < detector.totalFound(); i++) {
+				detector.getImageLocation(i, locationPixel);
 
-			// 	if( detector.hasUniqueID() )
-			// 		System.out.println("Target ID = "+detector.getId(i));
-			// 	if( detector.hasMessage() )
-			// 		System.out.println("Message   = "+detector.getMessage(i));
-			// 	System.out.println("2D Image Location = "+locationPixel);
+				if( detector.hasUniqueID() )
+					System.out.println("Target ID = "+detector.getId(i));
+				if( detector.hasMessage() )
+					System.out.println("Message   = "+detector.getMessage(i));
+				System.out.println("2D Image Location = "+locationPixel);
 
-			// 	if( detector.is3D() ) {
-			// 		detector.getFiducialToCamera(i, targetToSensor);
-			// 		System.out.println("3D Location:");
-			// 		System.out.println(targetToSensor);
-			// 		VisualizeFiducial.drawCube(targetToSensor, param, detector.getWidth(i), 3, g2);
-			// 		VisualizeFiducial.drawLabelCenter(targetToSensor, param, "" + detector.getId(i), g2);
-			// 	} else {
-			// 		VisualizeFiducial.drawLabel(locationPixel, "" + detector.getId(i), g2);
-			// 	}
-			// }
+				if( detector.is3D() ) {
+					detector.getFiducialToCamera(i, targetToSensor);
+					System.out.println("3D Location:");
+					System.out.println(targetToSensor);
+					// VisualizeFiducial.drawCube(targetToSensor, param, detector.getWidth(i), 3, g2);
+					// VisualizeFiducial.drawLabelCenter(targetToSensor, param, "" + detector.getId(i), g2);
+				} else {
+					// VisualizeFiducial.drawLabel(locationPixel, "" + detector.getId(i), g2);
+				}
+			}
 
 			// ShowImages.showWindow(input,"Fiducials",true);
 			}
