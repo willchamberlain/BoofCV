@@ -73,6 +73,8 @@ public class UtilImageIO {
 	 * @return List of found images.
 	 */
 	public static List<BufferedImage> loadImages( String directory , final String regex ) {
+		System.out.println(directory);
+		System.out.println(regex);
 
 		File[] files = new File(directory).listFiles(new FilenameFilter() {
 			@Override
@@ -83,7 +85,11 @@ public class UtilImageIO {
 
 		List<BufferedImage> ret = new ArrayList<>();
 
+		if( null == files ) {
+			return ret;
+		}
 		for( File f : files ) {
+			System.out.println(f.getAbsolutePath());
 			BufferedImage img = loadImage(f.getAbsolutePath());
 			if( img != null )
 				ret.add( img );

@@ -1,0 +1,3 @@
+Webcam Logitech 1280x720
+Target Width = 19.85cm = 0.1985m
+#643 #284

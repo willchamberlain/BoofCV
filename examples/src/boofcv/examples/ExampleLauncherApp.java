@@ -70,8 +70,16 @@ public class ExampleLauncherApp extends ApplicationLauncherApp {
 			List<Class> classes = new ArrayList<>();
 			String classNames[] = listTypes.toArray(new String[1]);
 			for( int i = 0; i < classNames.length; i++ ) {
-				if( !classNames[i].contains("Example"))
+				if( !classNames[i].contains("Example")) {
+					if (classNames[i].contains("MeasurementModelFiducialBinary")) {
+						try {
+							classes.add( Class.forName(classNames[i]));
+						} catch (ClassNotFoundException e) {
+							throw new RuntimeException(e);
+						}
+					}
 					continue;
+				}
 				// no idea why this is needed
 				if( classNames[i].contains("$"))
 					continue;
